@@ -179,25 +179,66 @@ export class GameScene extends Phaser.Scene {
     this.#gamePiece.setVisible(false);
     this.#currentPlayerTurnText.setText('Game over');
 
-    this.add.rectangle(this.scale.width / 2, this.scale.height / 2, GAME_WIDTH - 40, 140, 0x1f326e, 0.8).setDepth(4);
+    // Create semi-transparent background
+    this.add.rectangle(this.scale.width / 2, this.scale.height / 2, GAME_WIDTH - 40, 200, 0x1f326e, 0.8).setDepth(4);
 
+    // Add winner text
     this.add
-      .text(this.scale.width / 2, this.scale.height / 2 - 20, this.#service.gameWinnerText, {
+      .text(this.scale.width / 2, this.scale.height / 2 - 50, this.#service.gameWinnerText, {
         fontSize: '64px',
         fontFamily: GAME_ASSETS.DANCING_SCRIPT_FONT,
       })
       .setOrigin(0.5)
       .setDepth(5);
-    this.add
-      .text(this.scale.width / 2, this.scale.height / 2 + 40, 'Click to play again!', {
-        fontFamily: GAME_ASSETS.DANCING_SCRIPT_FONT,
-        fontSize: '32px',
-      })
-      .setOrigin(0.5)
+
+    // Create Play Again button
+    const playAgainButton = this.add
+      .rectangle(this.scale.width / 2 - 100, this.scale.height / 2 + 30, 160, 40, 0x4a90e2)
+      .setInteractive()
       .setDepth(5);
 
-    this.input.once(Phaser.Input.Events.POINTER_DOWN, () => {
-      this.#clearPieces();
+    const playAgainText = this.add
+      .text(this.scale.width / 2 - 100, this.scale.height / 2 + 30, 'Play Again', {
+        fontFamily: GAME_ASSETS.DANCING_SCRIPT_FONT,
+        fontSize: '24px',
+      })
+      .setOrigin(0.5)
+      .setDepth(6);
+
+    // Create New Game button
+    const newGameButton = this.add
+      .rectangle(this.scale.width / 2 + 100, this.scale.height / 2 + 30, 160, 40, 0x4a90e2)
+      .setInteractive()
+      .setDepth(5);
+
+    const newGameText = this.add
+      .text(this.scale.width / 2 + 100, this.scale.height / 2 + 30, 'New Game', {
+        fontFamily: GAME_ASSETS.DANCING_SCRIPT_FONT,
+        fontSize: '24px',
+      })
+      .setOrigin(0.5)
+      .setDepth(6);
+
+    // Add hover effects
+    playAgainButton.on('pointerover', () => {
+      playAgainButton.setFillStyle(0x357abd);
+    });
+    playAgainButton.on('pointerout', () => {
+      playAgainButton.setFillStyle(0x4a90e2);
+    });
+    newGameButton.on('pointerover', () => {
+      newGameButton.setFillStyle(0x357abd);
+    });
+    newGameButton.on('pointerout', () => {
+      newGameButton.setFillStyle(0x4a90e2);
+    });
+
+    // Add click handlers
+    playAgainButton.on('pointerdown', () => {
+      location.reload();
+    });
+    newGameButton.on('pointerdown', () => {
+      window.location.replace('/');
     });
   }
 
@@ -248,7 +289,15 @@ export class GameScene extends Phaser.Scene {
       onComplete: () => {
         this.cameras.main.fadeOut(1000);
         this.cameras.main.on(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-          window.location.replace('/');
+          // Clean up the current game state
+          // this.#gamePieceContainer.removeAll(true);
+          // this.#gamePieceContainer.y = 500;
+          // this.#gamePiece.setVisible(false);
+
+          // // Stop the current scene and return to title scene
+          // this.scene.stop(SCENE_KEYS.GAME);
+          // this.scene.start(SCENE_KEYS.TITLE);
+          location.reload();
         });
       },
     });

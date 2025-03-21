@@ -7,8 +7,13 @@
 
 import * as Phaser from 'phaser';
 import { GAME_ASSETS, SCENE_KEYS } from '../common';
+import { authService } from '../services/auth-service';
 
 export class TitleScene extends Phaser.Scene {
+  #loginButton!: Phaser.GameObjects.Rectangle;
+  #loginText!: Phaser.GameObjects.Text;
+  #userText!: Phaser.GameObjects.Text;
+
   constructor() {
     super({ key: SCENE_KEYS.TITLE });
   }
@@ -26,6 +31,30 @@ export class TitleScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
+    // Create login button
+    this.#loginButton = this.add
+      .rectangle(this.scale.width / 2, 550, 250, 50, 0x4285f4)
+      .setInteractive()
+      .setDepth(5);
+
+    this.#loginText = this.add
+      .text(this.scale.width / 2, 550, 'Sign in with Google', {
+        fontFamily: GAME_ASSETS.DANCING_SCRIPT_FONT,
+        fontSize: '28px',
+        color: '#ffffff',
+      })
+      .setOrigin(0.5)
+      .setDepth(6);
+
+    // Add user text (will show username when logged in)
+    this.#userText = this.add
+      .text(this.scale.width / 2, 620, '', {
+        fontFamily: GAME_ASSETS.DANCING_SCRIPT_FONT,
+        fontSize: '24px',
+      })
+      .setOrigin(0.5)
+      .setDepth(5);
+
     const clickToStartText = this.add
       .text(this.scale.width / 2, 700, 'Click to play', {
         fontFamily: GAME_ASSETS.DANCING_SCRIPT_FONT,
@@ -33,6 +62,22 @@ export class TitleScene extends Phaser.Scene {
       })
       .setAlpha(0)
       .setOrigin(0.5);
+
+    // Add hover effects for login button
+    this.#loginButton.on('pointerover', () => {
+      this.#loginButton.setFillStyle(0x357abd);
+    });
+    this.#loginButton.on('pointerout', () => {
+      this.#loginButton.setFillStyle(0x4285f4);
+    });
+
+    // Handle login click
+    this.#loginButton.on('pointerdown', () => {
+      void this.#handleLogin();
+    });
+
+    // Check if user is already logged in
+    void this.#checkAuthStatus();
 
     this.add
       .timeline([
@@ -86,14 +131,32 @@ export class TitleScene extends Phaser.Scene {
       .play();
 
     this.input.once(Phaser.Input.Events.POINTER_DOWN, () => {
-      // launch the lobby to allow players to join, and once ready go to game scene
-      // await Playroom.insertCoin({ streamMode: false, enableBots: false, matchmaking: false, maxPlayersPerRoom: 2 });
       this.cameras.main.fadeOut(1000, 31, 50, 110);
       this.cameras.main.on(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-        // stop demo scene
         this.scene.stop(SCENE_KEYS.DEMO);
         this.scene.start(SCENE_KEYS.GAME);
       });
     });
+  }
+
+  async #handleLogin(): Promise<void> {
+    try {
+      await authService.signInWithGoogle();
+    } catch (error) {
+      console.error('Login failed:', error);
+    }
+  }
+
+  async #checkAuthStatus(): Promise<void> {
+    try {
+      const user = await authService.getCurrentUser();
+      if (user?.email) {
+        this.#loginButton.setVisible(false);
+        this.#loginText.setVisible(false);
+        this.#userText.setText(`Logged in as: ${user.email}`);
+      }
+    } catch (error) {
+      console.error('Error checking auth status:', error);
+    }
   }
 }
